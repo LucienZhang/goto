@@ -22,6 +22,10 @@ type commandEntity struct {
 }
 
 func (c commandEntity) RGB(v interface{}) string {
+	if c.Color == "" {
+		return fmt.Sprintf("%v", v)
+	}
+
 	end := ""
 	s, ok := v.(string)
 	if !ok || !strings.HasSuffix(s, promptui.ResetCode) {
