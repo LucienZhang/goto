@@ -31,8 +31,9 @@ func (c commandEntity) RGB(v interface{}) string {
 }
 
 type config struct {
-	Shell    string
-	Commands []commandEntity
+	Shell             string
+	StartInSearchMode bool
+	Commands          []commandEntity
 }
 
 var (
@@ -40,7 +41,7 @@ var (
 	templates = promptui.SelectTemplates{
 		Active:   fmt.Sprintf("%s {{ .Name | underline | .RGB }}", promptui.IconSelect),
 		Inactive: "  {{ .Name | .RGB }}",
-		Selected: fmt.Sprintf(`{{ "%s" | green }} Going to {{ .Name | faint }}`, promptui.IconGood),
+		Selected: fmt.Sprintf(`{{ "%s" | green }} Going to {{ .Name | .RGB }}`, promptui.IconGood),
 		Details:  "{{ .Desc | faint }}",
 	}
 	rootCmd = &cobra.Command{
@@ -54,6 +55,12 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 				Label:     "Select an environment to go",
 				Items:     conf.Commands,
 				Templates: &templates,
+				Searcher: func(input string, index int) bool {
+					name := strings.Replace(strings.ToLower(conf.Commands[index].Name), " ", "", -1)
+					input = strings.Replace(strings.ToLower(input), " ", "", -1)
+					return strings.Contains(name, input)
+				},
+				StartInSearchMode: conf.StartInSearchMode,
 			}
 			idx, _, err := prompt.Run()
 			cobra.CheckErr(err)
@@ -93,7 +100,7 @@ func initConfig() {
 		}
 	}
 
-	conf = &config{"bash", []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.
+	conf = &config{"bash", false, []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.
 Complete documentation is available at https://github.com/LucienZhang/goto'`}}}
 	err = viper.Unmarshal(conf)
 	cobra.CheckErr(err)
