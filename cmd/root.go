@@ -12,7 +12,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-const CONFIG_FILE_PATH = ".goto/.goto.yaml"
+const (
+	configFilePath = ".goto/.goto.yaml"
+	esc            = "\033["
+	foregroundCode = "38;2;"
+)
 
 type commandEntity struct {
 	Name  string
@@ -31,7 +35,7 @@ func (c commandEntity) RGB(v interface{}) string {
 	if !ok || !strings.HasSuffix(s, promptui.ResetCode) {
 		end = promptui.ResetCode
 	}
-	return fmt.Sprintf("%s%sm%v%s", "\033[", "38;2;"+c.Color, v, end)
+	return fmt.Sprintf("%s%s%sm%v%s", esc, foregroundCode, c.Color, v, end)
 }
 
 type config struct {
@@ -77,6 +81,7 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 	}
 )
 
+// Execute executes the root command.
 func Execute() {
 	err := rootCmd.Execute()
 	cobra.CheckErr(err)
@@ -89,7 +94,7 @@ func init() {
 func initConfig() {
 	home, err := os.UserHomeDir()
 	cobra.CheckErr(err)
-	fullConfigFilePath := path.Join(home, CONFIG_FILE_PATH)
+	fullConfigFilePath := path.Join(home, configFilePath)
 	viper.SetConfigFile(fullConfigFilePath)
 
 	if err := viper.ReadInConfig(); err != nil {
