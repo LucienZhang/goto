@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 )
 
@@ -78,6 +80,7 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 			shellCmd.Stderr = os.Stderr
 			return shellCmd.Run()
 		},
+		DisableAutoGenTag: true,
 	}
 )
 
@@ -113,4 +116,21 @@ func initConfig() {
 Complete documentation is available at https://github.com/LucienZhang/goto'`}}}
 	err = viper.Unmarshal(conf)
 	cobra.CheckErr(err)
+}
+
+// GenManTree generates man page for the command.
+func GenManTree(dir string) {
+	header := &doc.GenManHeader{}
+	err := doc.GenManTree(rootCmd, header, dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// GenMarkdownTree generates markdown doc for the command.
+func GenMarkdownTree(dir string) {
+	err := doc.GenMarkdownTree(rootCmd, dir)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
