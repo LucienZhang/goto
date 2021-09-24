@@ -17,7 +17,7 @@ Let's do something! When you type `goto`, it gives you a list of commands to run
 ## Install
 
 ```sh
-brew install goto-cli
+brew install LucienZhang/tap/goto-cli
 ```
 
 ## Config
