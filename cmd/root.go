@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/LucienZhang/goto/configs"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -59,7 +60,7 @@ var (
 		Short: "Goto is an interactive command-line tool to manage your environments",
 		Long: `An interactive command-line tool to manage your environments.
 Complete documentation is available at https://github.com/LucienZhang/goto`,
-		Version: "0.0.1",
+		Version: configs.GetVersion(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			prompt := promptui.Select{
 				Label:     "Select an environment to go",
