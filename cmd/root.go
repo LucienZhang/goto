@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
+	"syscall"
 
 	"github.com/LucienZhang/goto/configs"
 	"github.com/manifoldco/promptui"
@@ -67,6 +69,7 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 				Items:     conf.Commands,
 				Templates: &templates,
 				Searcher: func(input string, index int) bool {
+					// todo: check for sub sequence
 					name := strings.Replace(strings.ToLower(conf.Commands[index].Name), " ", "", -1)
 					input = strings.Replace(strings.ToLower(input), " ", "", -1)
 					return strings.Contains(name, input)
@@ -76,10 +79,7 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 			idx, _, err := prompt.Run()
 			cobra.CheckErr(err)
 			shellCmd := exec.Command(conf.Shell, "-c", conf.Commands[idx].Cmd)
-			shellCmd.Stdin = os.Stdin
-			shellCmd.Stdout = os.Stdout
-			shellCmd.Stderr = os.Stderr
-			return shellCmd.Run()
+			return syscall.Exec(shellCmd.Path, argv(shellCmd), addCriticalEnv(dedupEnv(envv(shellCmd))))
 		},
 		DisableAutoGenTag: true,
 	}
@@ -134,4 +134,73 @@ func GenMarkdownTree(dir string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+/* Derived from exec.go */
+
+func envv(c *exec.Cmd) []string {
+	if c.Env != nil {
+		return c.Env
+	}
+	return syscall.Environ()
+}
+
+func argv(c *exec.Cmd) []string {
+	if len(c.Args) > 0 {
+		return c.Args
+	}
+	return []string{c.Path}
+}
+
+// dedupEnv returns a copy of env with any duplicates removed, in favor of
+// later values.
+// Items not of the normal environment "key=value" form are preserved unchanged.
+func dedupEnv(env []string) []string {
+	return dedupEnvCase(runtime.GOOS == "windows", env)
+}
+
+// dedupEnvCase is dedupEnv with a case option for testing.
+// If caseInsensitive is true, the case of keys is ignored.
+func dedupEnvCase(caseInsensitive bool, env []string) []string {
+	out := make([]string, 0, len(env))
+	saw := make(map[string]int, len(env)) // key => index into out
+	for _, kv := range env {
+		eq := strings.Index(kv, "=")
+		if eq < 0 {
+			out = append(out, kv)
+			continue
+		}
+		k := kv[:eq]
+		if caseInsensitive {
+			k = strings.ToLower(k)
+		}
+		if dupIdx, isDup := saw[k]; isDup {
+			out[dupIdx] = kv
+			continue
+		}
+		saw[k] = len(out)
+		out = append(out, kv)
+	}
+	return out
+}
+
+// addCriticalEnv adds any critical environment variables that are required
+// (or at least almost always required) on the operating system.
+// Currently this is only used for Windows.
+func addCriticalEnv(env []string) []string {
+	if runtime.GOOS != "windows" {
+		return env
+	}
+	for _, kv := range env {
+		eq := strings.Index(kv, "=")
+		if eq < 0 {
+			continue
+		}
+		k := kv[:eq]
+		if strings.EqualFold(k, "SYSTEMROOT") {
+			// We already have it.
+			return env
+		}
+	}
+	return append(env, "SYSTEMROOT="+os.Getenv("SYSTEMROOT"))
 }
