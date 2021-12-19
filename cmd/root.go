@@ -69,10 +69,17 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 				Items:     conf.Commands,
 				Templates: &templates,
 				Searcher: func(input string, index int) bool {
-					// todo: check for sub sequence
-					name := strings.Replace(strings.ToLower(conf.Commands[index].Name), " ", "", -1)
-					input = strings.Replace(strings.ToLower(input), " ", "", -1)
-					return strings.Contains(name, input)
+					// This algorithm is to check if input is a subsequence of command name, case insensitively.
+					input = strings.ToLower(input)
+					name := strings.ToLower(conf.Commands[index].Name)
+					i, j := 0, 0
+					for i < len(input) && j < len(name) {
+						if input[i] == name[j] {
+							i++
+						}
+						j++
+					}
+					return i == len(input)
 				},
 				StartInSearchMode: conf.StartInSearchMode,
 			}
