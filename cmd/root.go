@@ -89,13 +89,13 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 			idx, _, err := prompt.Run()
 			cobra.CheckErr(err)
 			currCmd := &conf.Commands[idx]
+			if strings.Replace(currCmd.Cmd, " ", "", -1) == "" {
+				return fmt.Errorf("command %s is empty", currCmd.Name)
+			}
 			var cmdToExec *exec.Cmd
 			if currCmd.ExecMode {
 				currCmdArgs, err := shlex.Split(currCmd.Cmd)
 				cobra.CheckErr(err)
-				if len(currCmdArgs) < 1 {
-					return fmt.Errorf("command %s is empty", currCmd.Name)
-				}
 				cmdToExec = exec.Command(currCmdArgs[0], currCmdArgs[1:]...)
 			} else {
 				wrapperShell := currCmd.Shell
