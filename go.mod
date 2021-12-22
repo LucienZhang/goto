@@ -3,7 +3,9 @@ module github.com/LucienZhang/goto
 go 1.17
 
 require (
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/manifoldco/promptui v0.8.0
+	github.com/riywo/loginshell v0.0.0-20200815045211-7d26008be1ab
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 )

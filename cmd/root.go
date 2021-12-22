@@ -11,7 +11,9 @@ import (
 	"syscall"
 
 	"github.com/LucienZhang/goto/configs"
+	"github.com/google/shlex"
 	"github.com/manifoldco/promptui"
+	"github.com/riywo/loginshell"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
@@ -24,10 +26,12 @@ const (
 )
 
 type commandEntity struct {
-	Name  string
-	Desc  string
-	Color string
-	Cmd   string
+	Name     string
+	Desc     string
+	Color    string
+	Cmd      string
+	Shell    string
+	ExecMode bool
 }
 
 func (c commandEntity) RGB(v interface{}) string {
@@ -44,13 +48,12 @@ func (c commandEntity) RGB(v interface{}) string {
 }
 
 type config struct {
-	Shell             string
 	StartInSearchMode bool
 	Commands          []commandEntity
 }
 
 var (
-	conf      *config
+	conf      = &config{}
 	templates = promptui.SelectTemplates{
 		Active:   fmt.Sprintf("%s {{ .Name | underline | .RGB }}", promptui.IconSelect),
 		Inactive: "  {{ .Name | .RGB }}",
@@ -85,8 +88,24 @@ Complete documentation is available at https://github.com/LucienZhang/goto`,
 			}
 			idx, _, err := prompt.Run()
 			cobra.CheckErr(err)
-			shellCmd := exec.Command(conf.Shell, "-c", conf.Commands[idx].Cmd)
-			return syscall.Exec(shellCmd.Path, argv(shellCmd), addCriticalEnv(dedupEnv(envv(shellCmd))))
+			currCmd := &conf.Commands[idx]
+			var cmdToExec *exec.Cmd
+			if currCmd.ExecMode {
+				currCmdArgs, err := shlex.Split(currCmd.Cmd)
+				cobra.CheckErr(err)
+				if len(currCmdArgs) < 1 {
+					return fmt.Errorf("command %s is empty", currCmd.Name)
+				}
+				cmdToExec = exec.Command(currCmdArgs[0], currCmdArgs[1:]...)
+			} else {
+				wrapperShell := currCmd.Shell
+				if wrapperShell == "" {
+					wrapperShell, err = loginshell.Shell()
+					cobra.CheckErr(err)
+				}
+				cmdToExec = exec.Command(wrapperShell, "-c", currCmd.Cmd)
+			}
+			return syscall.Exec(cmdToExec.Path, argv(cmdToExec), addCriticalEnv(dedupEnv(envv(cmdToExec))))
 		},
 		DisableAutoGenTag: true,
 	}
@@ -107,21 +126,23 @@ func initConfig() {
 	cobra.CheckErr(err)
 	fullConfigFilePath := path.Join(home, configFilePath)
 	viper.SetConfigFile(fullConfigFilePath)
+	viper.SetDefault("StartInSearchMode", false)
+	viper.SetDefault("Commands", []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.
+	Complete documentation is available at https://github.com/LucienZhang/goto'`, "", false}})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if os.IsNotExist(err) {
 			err := os.MkdirAll(path.Dir(fullConfigFilePath), 0755)
 			cobra.CheckErr(err)
-			file, err := os.OpenFile(fullConfigFilePath, os.O_RDONLY|os.O_CREATE, 0644)
+			// file, err := os.OpenFile(fullConfigFilePath, os.O_RDONLY|os.O_CREATE, 0644)
+			// file.Close()
+			err = viper.SafeWriteConfigAs(fullConfigFilePath)
 			cobra.CheckErr(err)
-			file.Close()
 		} else {
 			cobra.CheckErr(err)
 		}
 	}
 
-	conf = &config{"bash", false, []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.
-Complete documentation is available at https://github.com/LucienZhang/goto'`}}}
 	err = viper.Unmarshal(conf)
 	cobra.CheckErr(err)
 }
