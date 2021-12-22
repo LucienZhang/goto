@@ -126,7 +126,7 @@ func initConfig() {
 	cobra.CheckErr(err)
 	fullConfigFilePath := path.Join(home, configFilePath)
 	viper.SetConfigFile(fullConfigFilePath)
-	viper.SetDefault("StartInSearchMode", false)
+	viper.SetDefault("StartInSearchMode", true)
 	viper.SetDefault("Commands", []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.
 	Complete documentation is available at https://github.com/LucienZhang/goto'`, "", false}})
 
