@@ -127,8 +127,7 @@ func initConfig() {
 	fullConfigFilePath := path.Join(home, configFilePath)
 	viper.SetConfigFile(fullConfigFilePath)
 	viper.SetDefault("StartInSearchMode", true)
-	viper.SetDefault("Commands", []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.
-	Complete documentation is available at https://github.com/LucienZhang/goto'`, "", false}})
+	viper.SetDefault("Commands", []commandEntity{{"Help", "Show help information", "255;255;51", `echo 'Please config your commands in file ~/.goto/.goto.yaml.\nComplete documentation is available at https://github.com/LucienZhang/goto'`, "", false}})
 
 	if err := viper.ReadInConfig(); err != nil {
 		if os.IsNotExist(err) {
