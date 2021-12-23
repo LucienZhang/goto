@@ -30,8 +30,8 @@ Commands:
   - Name: command 1
     Desc: A command that just prints hello # (Optional)
     Color: 244;130;37 # (Optional, this is the RGB color code of your command name. It has to be in form of <r>;<g>;<b>)
-    Cmd: echo hello # The real command to run
-    Shell: bash # (Optional, the shell to run your command, default to bash)
+    Cmd: echo hello # The command to run
+    Shell: bash # (Optional, the shell to run your command, default to your user login shell)
     ExecMode: false # (Optional, default to false, whether run command in exec mode. See details below)
   - Name: ls goto config file
     Cmd: ls ~/.goto/.goto.yaml
