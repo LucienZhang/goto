@@ -25,13 +25,14 @@ brew install LucienZhang/tap/goto-cli
 You need to config your commands in file `~/.goto/.goto.yaml`
 
 ```yaml
-Shell: bash # (Optional, the shell to run your command, default to bash)
-StartInSearchMode: true # (Optional, default to false, whether start in search mode. press slash (/) to toggle between search mode and normal mode)
+StartInSearchMode: true # (Optional, default to true, whether start in search mode. press slash (/) to toggle between search mode and normal mode)
 Commands:
   - Name: command 1
-    Desc: A command that just print hello # (Optional)
+    Desc: A command that just prints hello # (Optional)
     Color: 244;130;37 # (Optional, this is the RGB color code of your command name. It has to be in form of <r>;<g>;<b>)
     Cmd: echo hello # The real command to run
+    Shell: bash # (Optional, the shell to run your command, default to bash)
+    ExecMode: false # (Optional, default to false, whether run command in exec mode. See details below)
   - Name: ls goto config file
     Cmd: ls ~/.goto/.goto.yaml
 ```
@@ -39,3 +40,9 @@ Commands:
 Then you have this!
 
 ![Demo](./docs/demo.gif)
+
+## Execution mode
+
+1. Shell mode. The default mode, when `ExecMode` is `false`. The command is run in a shell, which by default is your user login shell, or the shell you specified in `Shell` field.
+
+2. Exec mode. When `ExecMode` is `true`. The command will be run dirrectly.
